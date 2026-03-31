@@ -5,7 +5,7 @@ PageRank: Theory, Implementation, and GPTBot-Like AI Crawler Prioritisation
 
 Sections
 ────────
-  Part A — Core PageRank (web-Google_10k.txt)
+  Part A — Core PageRank (web-Google.txt)
     1.  Graph loading
     2.  Column-stochastic matrix construction (CSC sparse)
     3.  Toy graph: per-node p-sweep illustration  (Figure 1)
@@ -13,7 +13,7 @@ Sections
     5.  Solver 2 — Closed-form (sparse direct solve)
     6.  Solver 3 — Monte Carlo random-walk simulator
     7.  Three-way numerical comparison              (Figure 2)
-    8.  Full graph evaluation on web-Google_10k.txt
+    8.  Full graph evaluation on web-Google.txt
     9.  Effect of p on distribution                (Figure 4)
     10. Log-log rank distribution                  (Figure 3)
 
@@ -39,8 +39,8 @@ Outputs (figures saved to working directory)
 Requirements
 ────────────
     pip install numpy scipy matplotlib
-    Dataset: web-Google_10k.txt in the same directory
-             (https://hunglvosu.github.io/posts/2020/07/PA3/)
+    Dataset: web-Google.txt in the same directory
+             (https://snap.stanford.edu/data/web-Google.html)
 """
 
 import numpy as np
@@ -272,10 +272,11 @@ def pagerank_power(A, dangling_mask, p=0.15, tol=1e-10, max_iter=500):
 
 def pagerank_closed_form(A, p=0.15):
     """
-    Solves the linear system [I - (1-p)*S] r = (p/n)*1 via SuperLU.
+    Solves the linear system [I - (1-p)*S] r = (p/n)*1 via sparse direct solve.
 
     Closed form: r = (p/n) * [I - (1-p)*S]^{-1} * 1
 
+    Uses SciPy's spsolve (typically SuperLU, unless UMFPACK is available).
     Exact up to floating-point precision. Used on sub-graphs only
     (LU fill-in is prohibitive for n > ~10,000).
     """
