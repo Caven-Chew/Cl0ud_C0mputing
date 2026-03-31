@@ -350,18 +350,28 @@ def compare_pair(r_a, r_b, label_a='A', label_b='B'):
 
 
 def plot_method_comparison(r_pi, r_cf, r_mc, nodes, history_pi,
-                           output='method_comparison.png'):
+                           output='method_comparison.png',
+                           r_pi_full=None, nodes_full=None):
+    """
+    Four-panel comparison figure.
+    r_pi/r_cf/r_mc/nodes : 200-node subgraph vectors (scatter panels 1-2)
+    history_pi           : convergence history from FULL graph (panel 3)
+    r_pi_full/nodes_full : full graph data for top-15 panel (panel 4)
+    """
+    r_top = r_pi_full if r_pi_full is not None else r_pi
+    n_top = nodes_full if nodes_full is not None else nodes
+
     fig = plt.figure(figsize=(15, 4))
     gs  = gridspec.GridSpec(1, 4, figure=fig)
 
-    # Panel 1: Power iter vs closed form (should lie on y=x)
+    # Panel 1: Power iter vs closed form — should lie on y=x
     ax1 = fig.add_subplot(gs[0])
     ax1.scatter(r_cf, r_pi, s=4, alpha=0.4, color='steelblue')
     lims = [min(r_cf.min(), r_pi.min()), max(r_cf.max(), r_pi.max())]
     ax1.plot(lims, lims, 'r--', linewidth=1, label='y = x')
     ax1.set_xlabel('Closed-Form PR')
     ax1.set_ylabel('Power-Iter PR')
-    ax1.set_title('Power Iter vs\nClosed Form')
+    ax1.set_title('Power Iter vs\nClosed Form (subgraph)')
     ax1.legend(fontsize=8)
     ax1.grid(True, alpha=0.3)
 
@@ -372,35 +382,37 @@ def plot_method_comparison(r_pi, r_cf, r_mc, nodes, history_pi,
     ax2.plot(lims, lims, 'r--', linewidth=1, label='y = x')
     ax2.set_xlabel('Power-Iter PR')
     ax2.set_ylabel('Monte Carlo PR')
-    ax2.set_title('Power Iter vs\nMonte Carlo')
+    ax2.set_title('Power Iter vs\nMonte Carlo (subgraph)')
     ax2.legend(fontsize=8)
     ax2.grid(True, alpha=0.3)
 
-    # Panel 3: Convergence trace
+    # Panel 3: Convergence trace — use full graph history
     ax3 = fig.add_subplot(gs[2])
-    ax3.semilogy(history_pi, color='steelblue', linewidth=1.8)
+    ax3.semilogy(range(1, len(history_pi) + 1), history_pi,
+                 color='steelblue', linewidth=1.8)
     ax3.axhline(1e-10, color='red', linestyle='--',
                 linewidth=1, label='Tolerance 1e-10')
     ax3.set_xlabel('Iteration')
     ax3.set_ylabel('L1 Residual')
-    ax3.set_title('Power-Iter\nConvergence')
+    ax3.set_title(f'Power-Iter Convergence\n(full graph, {len(history_pi)} iters)')
     ax3.legend(fontsize=8)
     ax3.grid(True, alpha=0.3)
 
-    # Panel 4: Top-15 pages
+    # Panel 4: Top-15 pages — use full graph
     ax4 = fig.add_subplot(gs[3])
-    top15     = np.argsort(r_pi)[::-1][:15]
-    nd_labels = [str(nodes[i]) for i in top15]
-    ax4.barh(nd_labels[::-1], r_pi[top15][::-1],
+    top15     = np.argsort(r_top)[::-1][:15]
+    nd_labels = [str(n_top[i]) for i in top15]
+    ax4.barh(nd_labels[::-1], r_top[top15][::-1],
              color='steelblue', alpha=0.85)
     ax4.set_xlabel('PageRank score')
-    ax4.set_title('Top-15 Pages\n(Power Iter, p=0.15)')
+    ax4.set_title('Top-15 Pages\n(full graph, p=0.15)')
     ax4.grid(True, axis='x', alpha=0.3)
 
     plt.tight_layout()
     plt.savefig(output, dpi=150, bbox_inches='tight')
     plt.close()
     print(f'  Saved: {output}')
+
 
 
 # ─────────────────────────────────────────────────────────────
@@ -851,7 +863,9 @@ if __name__ == '__main__':
     compare_pair(r_pi_sub, r_mc_sub, 'PowerIter',  'MonteCarlo')
     compare_pair(r_cf_sub, r_mc_sub, 'ClosedForm', 'MonteCarlo')
     plot_method_comparison(r_pi_sub, r_cf_sub, r_mc_sub,
-                           sub_nodes, hist_sub, 'method_comparison.png')
+                           sub_nodes, hist_pi,
+                           'method_comparison.png',
+                           r_pi_full=r_pi, nodes_full=nodes)
 
     # [8] Top-20 pages on full graph
     print(f'\n[8] Top-20 pages (full {N:,}-node graph, p={P}):')
